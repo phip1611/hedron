@@ -32,6 +32,7 @@
 #include "vmx_preemption_timer.hpp"
 #include "x86.hpp"
 
+// Loads the data from the "regs" struct into the UTCB.
 bool Utcb::load_exc(Cpu_regs* regs)
 {
     mword m = regs->mtd;
@@ -74,6 +75,13 @@ bool Utcb::load_exc(Cpu_regs* regs)
         qual[1] = regs->cr2;
     }
 
+    if (m & Mtd::FS_GS) {
+        // "->gs_base", not "->gs"!
+        gs.base = regs->gs_base;
+        // "->fs_base", not "->fs"!
+        fs.base = regs->fs_base;
+    }
+
     barrier();
     mtd = m;
     items = sizeof(Utcb_data) / sizeof(mword);
@@ -81,6 +89,7 @@ bool Utcb::load_exc(Cpu_regs* regs)
     return m & Mtd::FPU;
 }
 
+// Saves the data from the UTCB into the "regs" struct.
 bool Utcb::save_exc(Cpu_regs* regs)
 {
     if (mtd & Mtd::GPR_ACDB) {
@@ -116,6 +125,13 @@ bool Utcb::save_exc(Cpu_regs* regs)
     if (mtd & Mtd::RFLAGS)
         regs->rfl = (rflags & ~(Cpu::EFL_VIP | Cpu::EFL_VIF | Cpu::EFL_VM | Cpu::EFL_RF | Cpu::EFL_IOPL)) |
                     Cpu::EFL_IF;
+
+    if (mtd & Mtd::FS_GS) {
+        // "->gs_base", not "->gs"!
+        regs->gs_base = gs.base;
+        // "->fs_base", not "->fs"!
+        regs->fs_base = fs.base;
+    }
 
     return mtd & Mtd::FPU;
 }

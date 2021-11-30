@@ -211,7 +211,11 @@ private:
 public:
     uint64 tsc_offset;
     mword mtd;
+    // Used to transfer the fs segment register to or from a CPU.
+    // Don't confuse with "fs"-property derived from class Exc_regs!
     mword fs_base;
+    // Used to transfer the gs segment register to or from a CPU.
+    // Don't confuse with "gs"-property derived from class Exc_regs!
     mword gs_base;
 
     inline mword hazard() const { return hzd; }

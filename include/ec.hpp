@@ -266,6 +266,8 @@ public:
         regs.ARG_3 = cnt;
     }
 
+    // Reads the gs_base and fs_base from the CPU segment registers and
+    // stores them inside the "regs" struct.
     inline void save_fsgs_base()
     {
         // The kernel switched GS_BASE and KERNEL_GS_BASE on kernel entry.
@@ -281,6 +283,7 @@ public:
         regs.fs_base = rdfsbase();
     }
 
+    // Loads the gs_base and fs_base from the "regs" struct into the actual CPU segment registers.
     inline void load_fsgs_base()
     {
         // See documentation of save_fsgs_base().
