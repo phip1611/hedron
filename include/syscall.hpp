@@ -52,6 +52,10 @@ public:
     inline Crd crd() const { return Crd(ARG_3); }
 
     inline bool is_passthrough() const { return flags() & 0x1; }
+
+    inline bool is_foreign_pd() const { return ARG_4 & 0x1; }
+
+    inline mword foreign_syscall_base() const { return ARG_4 >> 1; }
 };
 
 class Sys_create_ec : public Sys_regs

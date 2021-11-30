@@ -78,6 +78,16 @@ public:
     // grants partial MSR access.
     bool const is_passthrough = false;
 
+    // If this is true, all syscalls will be handled as non-native Hedron syscalls.
+    // In this case, the syscall will be delivered as exception to the portal specified
+    // by `foreign_syscall_base` + rax (syscall num)
+    bool is_foreign_pd{false};
+
+    // Only relevant, if `is_foreign_pd` is true. It will contain the base capability selector for the PTs,
+    // that handle foreign syscalls (similar to exceptions). This plus the CPU-NUM of the calling global EC
+    // equals the capability selector for the correct PT.
+    mword syscall_handler_pt_base{0};
+
     void* get_access_page();
 
     Pd();
@@ -98,7 +108,7 @@ public:
     // Construct a protection domain.
     //
     // creation_flags is a bit field of pd_creation_flags.
-    Pd(Pd* own, mword sel, mword a, int creation_flags);
+    Pd(Pd* own, mword sel, mword a, int creation_flags, bool foreign_pd, mword syscall_pt_base);
 
     HOT inline void make_current()
     {

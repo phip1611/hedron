@@ -466,6 +466,11 @@ public:
 
     template <bool> static void delegate();
 
+    // Handles the syscall of ECs, that don't use the native/Hedron syscall ABI, such as Linux applications.
+    // It sends an IPC message to the PT specified by a property inside the PD object.
+    NORETURN
+    static void sys_foreign_syscall();
+
     NORETURN
     static void dead() { die("IPC Abort"); }
 

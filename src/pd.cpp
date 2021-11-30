@@ -55,10 +55,11 @@ Pd::Pd() : Typed_kobject(static_cast<Space_obj*>(this)), Space_pio(this)
     Space_pio::addreg(0, 1UL << 16, 7);
 }
 
-Pd::Pd(Pd* own, mword sel, mword a, int creation_flags)
+Pd::Pd(Pd* own, mword sel, mword a, int creation_flags, bool foreign_pd, mword syscall_pt_base)
     : Typed_kobject(static_cast<Space_obj*>(own), sel, a, free, pre_free), Space_mem(Hpt::boot_hpt()),
       Space_pio(this), is_priv(creation_flags & IS_PRIVILEGED),
-      is_passthrough(creation_flags & IS_PASSTHROUGH)
+      is_passthrough(creation_flags & IS_PASSTHROUGH), is_foreign_pd(foreign_pd),
+      syscall_handler_pt_base(syscall_pt_base)
 {
 }
 

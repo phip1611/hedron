@@ -236,7 +236,12 @@ void Ec::sys_create_pd()
 {
     Sys_create_pd* r = static_cast<Sys_create_pd*>(current()->sys_regs());
 
-    trace(TRACE_SYSCALL, "EC:%p SYS_CREATE PD:%#lx", current(), r->sel());
+    if (EXPECT_FALSE(r->is_foreign_pd())) {
+        trace(TRACE_SYSCALL, "EC:%p SYS_CREATE PD:%#lx, is_foreign=true, foreign_syscall_base:%ld", current(),
+              r->sel(), r->foreign_syscall_base());
+    } else {
+        trace(TRACE_SYSCALL, "EC:%p SYS_CREATE PD:%#lx, is native PD", current(), r->sel());
+    }
 
     Capability parent_pd_cap = Space_obj::lookup(r->pd());
     Pd* parent_pd = capability_cast<Pd>(parent_pd_cap, Pd::PERM_OBJ_CREATION);
@@ -247,7 +252,8 @@ void Ec::sys_create_pd()
     }
 
     Pd* pd = new Pd(Pd::current(), r->sel(), parent_pd_cap.prm(),
-                    (r->is_passthrough() and parent_pd->is_passthrough) ? Pd::IS_PASSTHROUGH : 0);
+                    (r->is_passthrough() and parent_pd->is_passthrough) ? Pd::IS_PASSTHROUGH : 0,
+                    r->is_foreign_pd(), r->foreign_syscall_base());
     if (!Space_obj::insert_root(pd)) {
         trace(TRACE_ERROR, "%s: Non-NULL CAP (%#lx)", __func__, r->sel());
         delete pd;
@@ -810,9 +816,43 @@ void Ec::sys_machine_ctrl_update_microcode()
     sys_finish<Sys_regs::SUCCESS>();
 }
 
+void Ec::sys_foreign_syscall()
+{
+    // base + CPU-Num equals correct PT. Userland must ensure, that the PTs are attached to
+    // local ECs, that run on the corresponding CPUs.
+    mword syscall_pt_sel = current()->pd->syscall_handler_pt_base + current()->cpu;
+
+    trace(TRACE_SYSCALL, "foreign syscall: rip=%#lx, rcx=%#lx, PT_sel=%ld, rax/syscall num=%ld, mtd=%#lx",
+          // x86 spec: original rip+2 saved in RCX; RIP can't be accessed directly
+          current()->regs.rcx - 2, current()->regs.rcx, syscall_pt_sel, current()->regs.rax,
+          current()->regs.mtd);
+
+    Pt* pt = capability_cast<Pt>(Space_obj::lookup(syscall_pt_sel));
+    if (EXPECT_FALSE(not pt)) {
+        // required, because if the capability is not a PT, the code will pagefault
+        die("PT not found");
+    }
+
+    // make sure all registers are stored in UTCB (rax: sys call number, ...)
+    bool fpu = pt->ec->utcb->load_exc(&current()->regs);
+
+    if (EXPECT_FALSE(fpu)) {
+        pt->ec->transfer_fpu(current());
+    }
+
+    current()->regs.dst_portal = syscall_pt_sel;
+    // Kernel-initiated IPC to a PT in userland.
+    // Sets "cont" accordingly; after next "reply" kernel knows where to continue
+    send_msg<ret_user_iret>();
+}
+
 void Ec::syscall_handler()
 {
     // System call handler functions are all marked noreturn.
+
+    if (EXPECT_FALSE(current()->pd->is_foreign_pd)) {
+        sys_foreign_syscall();
+    }
 
     switch (current()->sys_regs()->id()) {
     case hypercall_id::HC_CALL:

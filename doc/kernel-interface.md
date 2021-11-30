@@ -457,6 +457,8 @@ untrusted userspace PDs.**
 | ARG1[63:12] | Destination Selector | A capability selector in the current PD that will point to the newly created PD.                                   |
 | ARG2        | Parent PD            | A capability selector to the parent PD.                                                                            |
 | ARG3        | CRD                  | A capability range descriptor. If this is not empty, the capabilities will be delegated from parent to new PD.     |
+| ARG4[0]     | Foreign PD           | All syscalls should be handled similar to exceptions and handled by portals.                                       |
+| ARG4[63:8]  | Foreign Syscall Base | Determines the PT base selector that handles syscalls from ECs of this PD. This + CPU-num equals the cap sel.      |
 
 ### Out
 
