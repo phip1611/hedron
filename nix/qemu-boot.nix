@@ -1,4 +1,4 @@
-{ stdenv, python3, qemu, netcat }:
+{ stdenv, python3, qemu }:
 
 stdenv.mkDerivation {
   pname = "boot-qemu";
@@ -7,7 +7,7 @@ stdenv.mkDerivation {
   src = ../test/integration;
 
   buildInputs = [ ];
-  propagatedBuildInputs = [ qemu python3.pkgs.pexpect netcat ];
+  propagatedBuildInputs = [ qemu python3.pkgs.pexpect ];
 
   checkInputs = [ python3.pkgs.black ];
 
