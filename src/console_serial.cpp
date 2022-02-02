@@ -20,6 +20,7 @@
 
 #include "console_serial.hpp"
 #include "cmdline.hpp"
+#include "hip.hpp"
 #include "hpt.hpp"
 #include "initprio.hpp"
 #include "x86.hpp"
@@ -28,13 +29,18 @@ INIT_PRIORITY(PRIO_CONSOLE) Console_serial Console_serial::con;
 
 Console_serial::Console_serial()
 {
-    if (!Cmdline::serial)
-        return;
-
+    // Bios Data Area (BDA) magic to find the serial port.
+    // This might change in the future:
+    // https://gitlab.vpn.cyberus-technology.de/supernova-core/supernova-core/-/issues/884#note_139786
     char* mem = static_cast<char*>(Hpt::remap(0));
     if (!(base = *reinterpret_cast<uint16*>(mem + 0x400)) &&
         !(base = *reinterpret_cast<uint16*>(mem + 0x402)))
         base = 0x3f8;
+
+    Hip::set_serial_port(static_cast<uint16>(base));
+
+    if (!Cmdline::serial)
+        return;
 
     out(LCR, 0x80);
     out(DLL, (freq / 115200) & 0xff);

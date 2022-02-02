@@ -179,6 +179,8 @@ void Hip::add_cpu(Cpu_info const& cpu_info)
     cpu->lapic_info = Cpu::lapic_info[Cpu::id()];
 }
 
+void Hip::set_serial_port(uint16 port) { hip()->serial_port = static_cast<uint64>(port); }
+
 void Hip::finalize()
 {
     Hip* h = hip();

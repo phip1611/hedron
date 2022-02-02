@@ -130,6 +130,14 @@ private:
     Acpi_gas pm1a_cnt; // 0x70
     Acpi_gas pm1b_cnt; // 0x7c
 
+    // The base port of the serial device.
+    // If this is 0 the system may fall back to
+    // the default port 0x3f8.
+    //
+    // This is an u64 instead of an u16 (which would be enough)
+    // because the HIP definition in Hedron has no packed attribute.
+    uint64 serial_port;
+
     Hip_cpu cpu_desc[NUM_CPU];
     Hip_ioapic ioapic_desc[NUM_IOAPIC];
     Hip_mem mem_desc[];
@@ -189,6 +197,8 @@ public:
     static void add_mhv(Hip_mem*& mem);
 
     static void add_cpu(Cpu_info const&);
+
+    static void set_serial_port(uint16 port);
 
     // Finalize the HIP.
     //
