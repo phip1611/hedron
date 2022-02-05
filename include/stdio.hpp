@@ -54,6 +54,7 @@ enum
     TRACE_DEL = 1UL << 18,
     TRACE_REV = 1UL << 19,
     TRACE_RCU = 1UL << 20,
+    TRACE_FAILED_SYSCALL = 1UL << 29,
     TRACE_SYSCALL = 1UL << 30,
     TRACE_ERROR = 1UL << 31,
 };
@@ -74,4 +75,4 @@ unsigned const trace_mask = TRACE_CPU | TRACE_IOMMU |
 //                            TRACE_RCU       |
 //                            TRACE_SYSCALL   |
 #endif
-                            TRACE_ERROR | 0;
+                            TRACE_ERROR | TRACE_FAILED_SYSCALL | 0;

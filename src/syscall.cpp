@@ -40,6 +40,10 @@
 
 template <Sys_regs::Status S, bool T> void Ec::sys_finish()
 {
+    if (EXPECT_FALSE(S != Sys_regs::SUCCESS)) {
+        trace(TRACE_FAILED_SYSCALL, "hypercall error %d", S);
+    }
+
     if (T)
         current()->clr_timeout();
 
@@ -899,6 +903,7 @@ void Ec::syscall_handler()
         sys_machine_ctrl();
 
     default:
+        trace(TRACE_FAILED_SYSCALL, "invalid hypercall %d", static_cast<int>(current()->sys_regs()->id()));
         Ec::sys_finish<Sys_regs::BAD_HYP>();
     }
 }

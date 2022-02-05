@@ -39,6 +39,7 @@ private:
     Tlb_cleanup update(mword, Capability);
 
 public:
+    // The amount of capability selectors is limited to a maximum of 2^26 = 67108864 capability selectors.
     static unsigned const caps = (END_SPACE_LIM - SPC_LOCAL_OBJ) / sizeof(Capability);
 
     static inline Capability lookup(unsigned long idx)
