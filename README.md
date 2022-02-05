@@ -1,3 +1,10 @@
+This repository is my public fork of Hedron. I created it during my Diplom/Master thesis project
+at [TU Dresden](https://tu-dresden.de/). It is available on [GitHub](<https://github.com/phip1611/hedron>).
+
+I try to keep it up-to-date with the [upstream repository](https://github.com/cyberus-technology/hedron).
+
+---
+
 # Hedron Microhypervisor
 
 The Hedron microhypervisor combines microkernel and hypervisor functionality
