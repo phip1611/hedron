@@ -850,9 +850,15 @@ void Ec::syscall_handler()
 {
     // System call handler functions are all marked noreturn.
 
-    if (EXPECT_FALSE(current()->pd->is_foreign_pd)) {
+    bool foreign_pd = current()->pd->is_foreign_pd;
+    // Native System Call Toggle (NSCT)
+    bool nsct = current()->utcb->nsct();
+
+    if (EXPECT_FALSE((foreign_pd && !nsct))) {
         sys_foreign_syscall();
+        // ^ function is "no return"
     }
+    // else: handle as native system call
 
     switch (current()->sys_regs()->id()) {
     case hypercall_id::HC_CALL:

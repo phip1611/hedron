@@ -140,4 +140,11 @@ public:
     static inline void* operator new(size_t) { return Buddy::allocator.alloc(0, Buddy::FILL_0); }
 
     static inline void operator delete(void* ptr) { Buddy::allocator.free(reinterpret_cast<mword>(ptr)); }
+
+    /// Returns whether the Native System Call Toggle (NSCT) is active.
+    inline bool nsct()
+    {
+        // TODO do not use tls field but introduce a new field into the UTCB head
+        return this->tls & (1ul << 63);
+    };
 };
