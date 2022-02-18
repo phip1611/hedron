@@ -147,4 +147,16 @@ public:
         // TODO do not use tls field but introduce a new field into the UTCB head
         return this->tls & (1ul << 63);
     };
+
+    /// Used for benchmarking the costs of the exception mechanism. This feature may get activated
+    /// by a caller. If this is true, after call() an full exception layout gets stored into the
+    /// UTCB and after the reply() the full exception layout gets saved back into the original utcb again.
+    inline bool always_save_n_load_exc()
+    {
+        bool save_exc = this->tls & (1ul << 62);
+        if (save_exc) {
+            this->mtd = ~0ul;
+        }
+        return save_exc;
+    };
 };

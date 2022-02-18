@@ -129,6 +129,9 @@ void Ec::sys_call()
     if (EXPECT_TRUE(!ec->cont)) {
         current()->cont = ret_user_sysexit;
         current()->set_partner(ec);
+        if (EXPECT_FALSE(current()->utcb->always_save_n_load_exc())) {
+            current()->regs.mtd = pt->mtd.val;
+        }
         ec->cont = recv_user;
         ec->regs.set_pt(pt->id);
         ec->regs.set_ip(pt->ip);
@@ -141,6 +144,7 @@ void Ec::sys_call()
     sys_finish<Sys_regs::COM_TIM>();
 }
 
+// Führt der Empfänger in seiner Zeitscheibe selbst aus.
 void Ec::recv_kern()
 {
     Ec* ec = current()->rcap;
@@ -160,11 +164,22 @@ void Ec::recv_kern()
     ret_user_sysexit();
 }
 
+// Führt der empfänger in seiner Zeitscheibe selbst aus
 void Ec::recv_user()
 {
     Ec* ec = current()->rcap;
 
-    ec->utcb->save(current()->utcb.get());
+    if (EXPECT_FALSE(ec->utcb->always_save_n_load_exc())) {
+        // trace(TRACE_ERROR, "transfer CPU exc data into cpu regs");
+        bool fpu = current()->utcb->save_exc(&ec->regs);
+        if (EXPECT_FALSE(fpu))
+        {
+            // trace(TRACE_ERROR, "transfer CPU exc data into cpu regs");
+            current()->transfer_fpu(ec);
+        }
+    } else {
+        ec->utcb->save(current()->utcb.get());
+    }
 
     if (EXPECT_FALSE(ec->utcb->tcnt()))
         delegate<true>();
@@ -220,8 +235,14 @@ void Ec::sys_reply()
 
         bool fpu = false;
 
-        if (EXPECT_TRUE(ec->cont == ret_user_sysexit))
-            src->save(ec->utcb.get());
+        if (EXPECT_TRUE(ec->cont == ret_user_sysexit)) {
+            if (EXPECT_FALSE(ec->utcb->always_save_n_load_exc())) {
+                //trace(TRACE_ERROR, "loading exc data into cpu regs");
+                fpu = src->load_exc(&ec->regs);
+            } else {
+                src->save(ec->utcb.get());
+            }
+        }
         else if (ec->cont == ret_user_iret)
             fpu = src->save_exc(&ec->regs);
         else if (ec->cont == ret_user_vmresume)
