@@ -46,10 +46,21 @@ public:
     }
 };
 
+/// Flags that alter the handling in the system call.
+/// A 32-bit long field in the UTCB head.
+enum System_call_flags : uint32 {
+    /// Native System Call Toggle. Used by foreign apps to mark the next system call as Hedron-native
+    /// system call. In this case the normal system call handler routine should be executed.
+    NSCT = 1 << 0
+};
+
 class Utcb_head
 {
+public:
+    System_call_flags system_call_flags;
+
 protected:
-    mword items;
+    uint32 items;
 
 public:
     Crd xlt, del;
@@ -142,9 +153,5 @@ public:
     static inline void operator delete(void* ptr) { Buddy::allocator.free(reinterpret_cast<mword>(ptr)); }
 
     /// Returns whether the Native System Call Toggle (NSCT) is active.
-    inline bool nsct()
-    {
-        // TODO do not use tls field but introduce a new field into the UTCB head
-        return this->tls & (1ul << 63);
-    };
+    inline bool nsct() { return this->system_call_flags & System_call_flags::NSCT; };
 };
